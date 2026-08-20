@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Мектептегі үзіліс: Достарды жина!</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%; width: 100%;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    font-family: 'Segoe UI', Verdana, 'Trebuchet MS', Tahoma, sans-serif;
+    background: #7dd3fc;
+  }
+  #app { touch-action: none; }
+
+  /* ---------- decorations ---------- */
+  .sun {
+    position: fixed; top: 2vh; left: 4vw; font-size: 5rem; z-index: 1;
+    filter: drop-shadow(0 0 20px rgba(255,220,0,.6));
+    animation: spin-slow 20s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes spin-slow { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .cloud {
+    position: fixed; top: 6vh; font-size: 3.5rem; z-index: 1; opacity:.9;
+    animation: drift 40s linear infinite;
+    pointer-events: none;
+  }
+  .cloud2 { top: 12vh; font-size: 2.7rem; animation-duration: 55s; animation-delay: -15s; }
+  @keyframes drift { from{ transform: translateX(-15vw);} to{ transform: translateX(115vw);} }
+  .school-icon {
+    position: fixed; top: 9.5vh; left: 50%; transform: translateX(-50%);
+    font-size: 4.2rem; z-index: 20; pointer-events:none;
+    filter: drop-shadow(0 6px 6px rgba(0,0,0,.25));
+  }
+
+  /* ---------- math cards ---------- */
+  .math-card {
+    position: fixed;
+    width: 150px; height: 150px;
+    background: radial-gradient(circle at 30% 25%, #fff7b0, #fde047 70%);
+    border: 6px solid #ca8a04;
+    border-radius: 28px;
+    box-shadow: 0 10px 0 rgba(0,0,0,.15), 0 14px 20px rgba(0,0,0,.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.6rem; font-weight: 900; color: #7c2d12;
+    cursor: grab; z-index: 30; pointer-events: auto;
+    animation: pop-in .35s cubic-bezier(.34,1.56,.64,1);
+    touch-action: none;
+  }
+  .math-card.dragging {
+    cursor: grabbing;
+    transform: scale(1.12) rotate(-3deg);
+    box-shadow: 0 4px 0 rgba(0,0,0,.15), 0 30px 30px rgba(0,0,0,.35);
+    z-index: 100;
+    transition: none;
+  }
+  @keyframes pop-in {
+    0% { transform: scale(0) rotate(-25deg); opacity:0; }
+    65% { transform: scale(1.2) rotate(6deg); opacity:1; }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  .drop-zone {
+    border: 8px dashed rgba(255,255,255,.85);
+    border-radius: 40px;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    color: #fff; text-shadow: 0 3px 6px rgba(0,0,0,.35);
+    transition: background-color .2s, outline .2s, transform .2s;
+  }
+  .drop-zone.zone-active {
+    background-color: rgba(255,255,255,.35);
+    outline: 8px solid #fde047;
+    transform: scale(1.03);
+  }
+
+  .yard { position:absolute; }
+  .friend-emoji {
+    display:inline-block; font-size: 2.6rem; line-height:1;
+    animation: pop-in .4s cubic-bezier(.34,1.56,.64,1) backwards;
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,.25));
+  }
+
+  .ans-btn {
+    min-width: 170px; min-height: 170px;
+    background: #ffffff; border-radius: 32px;
+    box-shadow: 0 8px 0 rgba(0,0,0,.2), 0 14px 22px rgba(0,0,0,.3);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:900; cursor:pointer; border:6px solid rgba(0,0,0,.08);
+    transition: transform .08s;
+  }
+  .ans-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+  .ans-btn.shake-anim { animation: shake .5s; background:#fecaca !important; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0);} 20%{transform:translateX(-16px);}
+    40%{transform:translateX(16px);} 60%{transform:translateX(-10px);} 80%{transform:translateX(10px);}
+  }
+
+  .verbal-btn {
+    font-weight: 900; border-radius: 24px; padding: 1.6rem 2.2rem;
+    font-size: 1.9rem; color:#fff; box-shadow: 0 8px 0 rgba(0,0,0,.2), 0 14px 20px rgba(0,0,0,.3);
+    cursor:pointer; transition: transform .08s;
+  }
+  .verbal-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 rgba(0,0,0,.2); }
+
+  .star-burst {
+    position: fixed; font-size: 3rem; z-index: 90; pointer-events:none;
+    animation: star-fly 1.1s ease-out forwards;
+  }
+  @keyframes star-fly {
+    0% { transform: translateY(0) scale(.6) rotate(0); opacity:1; }
+    100% { transform: translateY(-160px) scale(1.6) rotate(50deg); opacity:0; }
+  }
+
+  .confetti-piece {
+    position: fixed; top: -30px; z-index: 65; pointer-events:none;
+    animation-name: fall; animation-timing-function: linear; animation-fill-mode: forwards;
+  }
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(115vh) rotate(400deg); }
+  }
+
+  .timer-urgent { border-color:#ef4444 !important; }
+  .timer-urgent #timer-display { color:#dc2626 !important; }
+  .pulse-red { animation: pulse-red 1s infinite; }
+  @keyframes pulse-red { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
+
+  .bounce-slow { animation: bounce-slow 2.2s infinite; }
+  @keyframes bounce-slow { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-14px);} }
+
+  .score-pop { animation: score-pop .4s ease; }
+  @keyframes score-pop { 0%{transform:scale(1);} 40%{transform:scale(1.5);} 100%{transform:scale(1);} }
+
+  .mode-btn {
+    background:#f3f4f6; border-color:#d1d5db; color:#6b7280;
+    transition: transform .12s, background-color .12s, border-color .12s, color .12s;
+  }
+  .mode-btn.selected {
+    background:#fde047; border-color:#ca8a04; color:#7c2d12;
+    transform: scale(1.08);
+    box-shadow: 0 6px 0 rgba(0,0,0,.12);
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ decorative background ============ -->
+<div class="sun">☀️</div>
+<div class="cloud">☁️</div>
+<div class="cloud cloud2">☁️</div>
+
+<!-- ============ START SCREEN ============ -->
+<div id="start-screen" class="fixed inset-0 z-[70] flex items-center justify-center bg-gradient-to-b from-sky-300 to-sky-500 p-4">
+  <div class="bg-white/95 rounded-[3rem] shadow-2xl border-8 border-yellow-400 px-8 md:px-16 py-8 md:py-12 max-w-4xl w-full text-center max-h-[94vh] overflow-y-auto">
+    <div class="text-6xl md:text-7xl mb-2">🎉🏫🎉</div>
+    <h1 class="text-4xl md:text-6xl font-black text-blue-700 leading-tight mb-6">Мектептегі үзіліс:<br>Достарды жина!</h1>
+
+    <!-- Team name inputs -->
+    <div class="text-lg md:text-2xl font-bold text-gray-500 mb-3">Топ атауын жазыңыз:</div>
+    <div class="flex flex-col md:flex-row gap-4 justify-center mb-8">
+      <div class="flex items-center gap-2 bg-blue-50 border-4 border-blue-400 rounded-2xl px-4 py-3">
+        <span class="text-3xl md:text-4xl">🦉</span>
+        <input id="input-name-left" type="text" maxlength="14" placeholder="Тапқырлар"
+          class="text-xl md:text-3xl font-black text-blue-700 bg-transparent outline-none w-36 md:w-48 placeholder-blue-300 text-center">
+      </div>
+      <div class="flex items-center gap-2 bg-red-50 border-4 border-red-400 rounded-2xl px-4 py-3">
+        <span class="text-3xl md:text-4xl">🐯</span>
+        <input id="input-name-right" type="text" maxlength="14" placeholder="Алғырлар"
+          class="text-xl md:text-3xl font-black text-red-700 bg-transparent outline-none w-36 md:w-48 placeholder-red-300 text-center">
+      </div>
+    </div>
+
+    <!-- Mode selector -->
+    <div class="mb-9">
+      <div class="text-lg md:text-2xl font-bold text-gray-500 mb-3">Ойын режимін таңда:</div>
+      <div class="flex gap-3 justify-center flex-wrap" id="mode-selector">
+        <button type="button" data-mode="add" class="mode-btn text-lg md:text-2xl font-black rounded-2xl px-5 md:px-6 py-3 md:py-4 border-4">➕ Қосу</button>
+        <button type="button" data-mode="sub" class="mode-btn text-lg md:text-2xl font-black rounded-2xl px-5 md:px-6 py-3 md:py-4 border-4">➖ Азайту</button>
+        <button type="button" data-mode="mixed" class="mode-btn text-lg md:text-2xl font-black rounded-2xl px-5 md:px-6 py-3 md:py-4 border-4">🔀 Аралас</button>
+      </div>
+    </div>
+
+    <button id="btn-start" class="bounce-slow bg-yellow-400 hover:bg-yellow-300 active:translate-y-2 text-blue-900 text-4xl md:text-5xl font-black rounded-full px-12 md:px-16 py-6 md:py-8 shadow-[0_10px_0_rgba(0,0,0,.2)]">
+      ▶️ Бастау
+    </button>
+  </div>
+</div>
+
+<!-- ============ GAME APP ============ -->
+<div id="app" class="fixed inset-0 z-10 hidden">
+
+  <!-- Background photo (put a file named background.jpeg next to this HTML file).
+       If the file is missing, the gradient fallback below stays visible instead. -->
+  <div id="bg-fallback" class="fixed inset-0 z-0 bg-gradient-to-b from-sky-300 via-sky-200 to-green-300"></div>
+  <img id="bg-photo" src="background.jpeg" alt="" class="fixed inset-0 w-full h-full object-cover z-0" onerror="this.style.display='none';">
+
+  <!-- School icon divider -->
+  <div class="school-icon">🏫</div>
+
+  <!-- Timer -->
+  <div id="timer-badge" class="fixed bottom-[27%] left-1/2 -translate-x-1/2 z-40 bg-white border-8 border-yellow-400 rounded-full shadow-2xl px-8 md:px-12 py-3 md:py-4 flex items-center gap-3">
+    <span class="text-4xl md:text-5xl">⏰</span>
+    <span id="timer-display" class="text-5xl md:text-6xl font-black text-gray-800">90</span>
+  </div>
+
+  <!-- Scoreboard LEFT -->
+  <div class="fixed top-4 left-4 z-40 bg-blue-600 text-white rounded-[2rem] shadow-2xl border-4 border-white px-5 md:px-7 py-3 md:py-4 flex items-center gap-3 md:gap-4">
+    <span class="text-5xl md:text-6xl">🦉</span>
+    <div>
+      <div id="team-label-left" class="text-xl md:text-2xl font-black leading-none">Тапқырлар</div>
+      <div id="score-left" class="text-4xl md:text-5xl font-black leading-tight">0</div>
+    </div>
+  </div>
+
+  <!-- Scoreboard RIGHT -->
+  <div class="fixed top-4 right-4 z-40 bg-red-600 text-white rounded-[2rem] shadow-2xl border-4 border-white px-5 md:px-7 py-3 md:py-4 flex items-center gap-3 md:gap-4 flex-row-reverse">
+    <span class="text-5xl md:text-6xl">🐯</span>
+    <div class="text-right">
+      <div id="team-label-right" class="text-xl md:text-2xl font-black leading-none">Алғырлар</div>
+      <div id="score-right" class="text-4xl md:text-5xl font-black leading-tight">0</div>
+    </div>
+  </div>
+
+  <!-- LEFT HALF -->
+  <div id="left-half" class="absolute left-0 top-0 w-1/2 h-full bg-blue-500/35 overflow-hidden z-10">
+    <div id="drop-left" class="drop-zone absolute left-1/2 -translate-x-1/2 top-[45%] w-[82%] h-[24%] text-2xl md:text-3xl font-black">
+      👉 Жауап алаңы
+    </div>
+    <div id="yard-left" class="yard absolute bottom-0 left-0 w-full h-[26%] bg-gradient-to-b from-green-400/45 to-green-700/55 flex flex-wrap content-start gap-1 p-3 overflow-hidden">
+      <span class="absolute bottom-1 left-2 text-sm md:text-base font-bold text-white/90 drop-shadow">🏡 Мектеп ауласы</span>
+    </div>
+  </div>
+
+  <!-- RIGHT HALF -->
+  <div id="right-half" class="absolute right-0 top-0 w-1/2 h-full bg-red-500/35 overflow-hidden z-10">
+    <div id="drop-right" class="drop-zone absolute left-1/2 -translate-x-1/2 top-[45%] w-[82%] h-[24%] text-2xl md:text-3xl font-black">
+      👈 Жауап алаңы
+    </div>
+    <div id="yard-right" class="yard absolute bottom-0 left-0 w-full h-[26%] bg-gradient-to-b from-green-400/45 to-green-700/55 flex flex-wrap content-start gap-1 p-3 overflow-hidden">
+      <span class="absolute bottom-1 left-2 text-sm md:text-base font-bold text-white/90 drop-shadow">🏡 Мектеп ауласы</span>
+    </div>
+  </div>
+
+  <!-- Cards layer (fixed, appended above halves) -->
+  <div id="cards-layer" class="fixed inset-0 z-30 pointer-events-none"></div>
+
+  <!-- ANSWER PANEL - LEFT -->
+  <div id="panel-left" style="display:none;" class="fixed left-0 top-0 w-1/2 h-full bg-blue-900/85 z-50 flex-col items-center justify-center text-center p-6">
+    <div id="problem-left" class="text-white font-black text-[4.2rem] md:text-[6rem] leading-none mb-6 drop-shadow-lg">2 + 1 = ?</div>
+    <div id="opts-left" class="flex gap-5 flex-wrap justify-center"></div>
+    <div id="verbal-wrap-left" class="hidden flex-col items-center gap-3 mt-4">
+      <div id="result-left" class="text-green-300 text-3xl md:text-4xl font-black mb-1"></div>
+      <div id="rule-left" class="text-yellow-200 text-lg md:text-xl italic font-bold mb-2 max-w-md"></div>
+      <div class="flex gap-4 flex-wrap justify-center">
+        <button id="verbal-correct-left" class="verbal-btn bg-green-500 hover:bg-green-400">✅ Ауызша дұрыс айтты!</button>
+        <button id="verbal-wrong-left" class="verbal-btn bg-gray-400 hover:bg-gray-300">➖ Ауызша қате</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANSWER PANEL - RIGHT -->
+  <div id="panel-right" style="display:none;" class="fixed right-0 top-0 w-1/2 h-full bg-red-900/85 z-50 flex-col items-center justify-center text-center p-6">
+    <div id="problem-right" class="text-white font-black text-[4.2rem] md:text-[6rem] leading-none mb-6 drop-shadow-lg">2 + 1 = ?</div>
+    <div id="opts-right" class="flex gap-5 flex-wrap justify-center"></div>
+    <div id="verbal-wrap-right" class="hidden flex-col items-center gap-3 mt-4">
+      <div id="result-right" class="text-green-300 text-3xl md:text-4xl font-black mb-1"></div>
+      <div id="rule-right" class="text-yellow-200 text-lg md:text-xl italic font-bold mb-2 max-w-md"></div>
+      <div class="flex gap-4 flex-wrap justify-center">
+        <button id="verbal-correct-right" class="verbal-btn bg-green-500 hover:bg-green-400">✅ Ауызша дұрыс айтты!</button>
+        <button id="verbal-wrong-right" class="verbal-btn bg-gray-400 hover:bg-gray-300">➖ Ауызша қате</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confetti layer -->
+  <div id="confetti-layer" class="fixed inset-0 z-[65] pointer-events-none overflow-hidden"></div>
+
+</div>
+
+<!-- ============ END SCREEN ============ -->
+<div id="end-screen" style="display:none;" class="fixed inset-0 z-[80] items-center justify-center bg-black/70">
+  <div class="bg-white rounded-[3rem] shadow-2xl border-8 border-yellow-400 px-10 md:px-16 py-10 md:py-14 max-w-4xl text-center">
+    <div class="text-6xl mb-2">🔔</div>
+    <h2 class="text-4xl md:text-5xl font-black text-gray-800 mb-4">Үзіліс аяқталды!</h2>
+    <div id="winner-text" class="text-4xl md:text-6xl font-black mb-8">—</div>
+    <div class="flex items-center justify-center gap-10 mb-10">
+      <div class="bg-blue-100 rounded-3xl px-8 py-6 border-4 border-blue-400">
+        <div class="text-3xl mb-1">🦉 <span id="final-label-left">Тапқырлар</span></div>
+        <div id="final-left" class="text-6xl font-black text-blue-700">0</div>
+      </div>
+      <div class="bg-red-100 rounded-3xl px-8 py-6 border-4 border-red-400">
+        <div class="text-3xl mb-1">🐯 <span id="final-label-right">Алғырлар</span></div>
+        <div id="final-right" class="text-6xl font-black text-red-700">0</div>
+      </div>
+    </div>
+    <button id="btn-restart" class="bg-yellow-400 hover:bg-yellow-300 active:translate-y-2 text-blue-900 text-4xl font-black rounded-full px-14 py-6 shadow-[0_10px_0_rgba(0,0,0,.2)]">
+      🔄 Қайта ойнау
+    </button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* =========================================================
+     AUDIO — synthesized sound effects (no external files)
+  ========================================================= */
+  let audioCtx = null;
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  }
+  function tone(freq, start, duration, type, vol){
+    type = type || 'sine'; vol = vol === undefined ? 0.3 : vol;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + start);
+    gain.gain.exponentialRampToValueAtTime(vol, audioCtx.currentTime + start + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + start + duration);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + start);
+    osc.stop(audioCtx.currentTime + start + duration + 0.05);
+  }
+  function playBell(){
+    ensureAudio();
+    tone(1046.5, 0.00, 0.55, 'triangle', 0.35);
+    tone(1046.5, 0.55, 0.55, 'triangle', 0.35);
+    tone(1046.5, 1.10, 0.85, 'triangle', 0.35);
+  }
+  function playCorrect(){
+    ensureAudio();
+    tone(523.25, 0.00, 0.14, 'sine', 0.32);
+    tone(659.25, 0.12, 0.14, 'sine', 0.32);
+    tone(783.99, 0.24, 0.28, 'sine', 0.32);
+  }
+  function playWrong(){
+    ensureAudio();
+    tone(300, 0.00, 0.16, 'sawtooth', 0.22);
+    tone(200, 0.14, 0.26, 'sawtooth', 0.22);
+  }
+  function playStar(){
+    ensureAudio();
+    tone(1200, 0.00, 0.10, 'sine', 0.28);
+    tone(1600, 0.08, 0.16, 'sine', 0.28);
+    tone(2000, 0.16, 0.16, 'sine', 0.22);
+  }
+  function playFanfare(){
+    ensureAudio();
+    const notes = [523.25,659.25,783.99,1046.5];
+    notes.forEach((f,i)=> tone(f, i*0.16, 0.35, 'triangle', 0.3));
+    tone(1046.5, 0.75, 0.8, 'triangle', 0.32);
+    tone(1318.5, 0.75, 0.8, 'triangle', 0.24);
+  }
+
+  /* =========================================================
+     GAME STATE
+  ========================================================= */
+  const state = {
+    scores: { left: 0, right: 0 },
+    timeLeft: 90,
+    running: false,
+    cardIdCounter: 0,
+    activeCards: {},
+    maxActiveCards: 4,
+    timerInterval: null,
+    spawnTimeout: null,
+    mode: 'mixed',
+    teamNames: { left: 'Тапқырлар', right: 'Алғырлар' }
+  };
+  const centerSlotsOccupied = [false, false, false, false];
+
+  const PROBLEM_BANK = [
+    {expr:"2 + 1", answer:3},
+    {expr:"3 - 1", answer:2},
+    {expr:"1 + 2", answer:3},
+    {expr:"3 - 2", answer:1},
+    {expr:"1 + 1", answer:2},
+    {expr:"2 - 1", answer:1},
+    {expr:"0 + 3", answer:3},
+    {expr:"3 - 0", answer:3},
+    {expr:"2 + 2", answer:4},
+    {expr:"3 + 1", answer:4},
+    {expr:"1 + 3", answer:4},
+    {expr:"4 - 2", answer:2},
+    {expr:"4 - 1", answer:3},
+    {expr:"0 + 2", answer:2},
+    {expr:"2 - 0", answer:2},
+    {expr:"1 + 0", answer:1}
+  ];
+
+  const FRIEND_EMOJIS = ['🧒','👦','👧','🧑','👶','🧒🏻'];
+
+  function getFilteredBank(){
+    if(state.mode === 'add') return PROBLEM_BANK.filter(p => p.expr.indexOf('+') !== -1);
+    if(state.mode === 'sub') return PROBLEM_BANK.filter(p => p.expr.indexOf('-') !== -1);
+    return PROBLEM_BANK;
+  }
+
+  function randomProblem(){
+    const bank = getFilteredBank();
+    return bank[Math.floor(Math.random()*bank.length)];
+  }
+
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]] = [arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  function generateOptions(correct){
+    const opts = new Set([correct]);
+    let guard = 0;
+    while(opts.size < 3 && guard < 50){
+      guard++;
+      let candidate = correct + (Math.floor(Math.random()*5) - 2); // correct-2 .. correct+2
+      if(candidate < 0) candidate = Math.floor(Math.random()*4) + 1;
+      if(candidate > 5) candidate = 5;
+      opts.add(candidate);
+    }
+    return shuffle(Array.from(opts));
+  }
+
+  /* =========================================================
+     DOM refs
+  ========================================================= */
+  const $ = (id) => document.getElementById(id);
+  const startScreen = $('start-screen');
+  const app = $('app');
+  const endScreen = $('end-screen');
+  const timerBadge = $('timer-badge');
+  const timerDisplay = $('timer-display');
+  const scoreLeftEl = $('score-left');
+  const scoreRightEl = $('score-right');
+  const teamLabelLeft = $('team-label-left');
+  const teamLabelRight = $('team-label-right');
+  const inputNameLeft = $('input-name-left');
+  const inputNameRight = $('input-name-right');
+  const modeButtons = document.querySelectorAll('.mode-btn');
+  const dropLeft = $('drop-left');
+  const dropRight = $('drop-right');
+  const yardLeft = $('yard-left');
+  const yardRight = $('yard-right');
+  const cardsLayer = $('cards-layer');
+  const confettiLayer = $('confetti-layer');
+
+  const panels = {
+    left: {
+      root: $('panel-left'), problem: $('problem-left'), opts: $('opts-left'),
+      verbalWrap: $('verbal-wrap-left'), result: $('result-left'), rule: $('rule-left'),
+      btnCorrect: $('verbal-correct-left'), btnWrong: $('verbal-wrong-left')
+    },
+    right: {
+      root: $('panel-right'), problem: $('problem-right'), opts: $('opts-right'),
+      verbalWrap: $('verbal-wrap-right'), result: $('result-right'), rule: $('rule-right'),
+      btnCorrect: $('verbal-correct-right'), btnWrong: $('verbal-wrong-right')
+    }
+  };
+
+  /* =========================================================
+     CARD SPAWNING & DRAG (Pointer Events => multitouch safe)
+  ========================================================= */
+  /* 4 fixed slots clustered around the dead-center point of the screen,
+     so cards always appear "қақ ортада" instead of scattered randomly. */
+  function getCenterSlots(){
+    const w = window.innerWidth, h = window.innerHeight;
+    const cardSize = 150;
+    const cx = w/2 - cardSize/2;   // left-edge x that centers the card horizontally
+    const cy = h*0.30;             // vertical center point of the shared play area
+    const gapX = 95, gapY = 80;
+    return [
+      { x: cx - gapX - cardSize/2, y: cy - gapY - cardSize/2 },
+      { x: cx + gapX - cardSize/2, y: cy - gapY - cardSize/2 },
+      { x: cx - gapX - cardSize/2, y: cy + gapY - cardSize/2 },
+      { x: cx + gapX - cardSize/2, y: cy + gapY - cardSize/2 }
+    ];
+  }
+
+  function spawnCard(){
+    if(!state.running) return;
+    if(Object.keys(state.activeCards).length >= state.maxActiveCards) return;
+
+    const slotIndex = centerSlotsOccupied.indexOf(false);
+    if(slotIndex === -1) return;
+    centerSlotsOccupied[slotIndex] = true;
+
+    const id = 'c' + (state.cardIdCounter++);
+    const problem = randomProblem();
+    const slots = getCenterSlots();
+    const jitterX = Math.random()*16 - 8;
+    const jitterY = Math.random()*16 - 8;
+    const x = slots[slotIndex].x + jitterX;
+    const y = slots[slotIndex].y + jitterY;
+
+    const el = document.createElement('div');
+    el.className = 'math-card';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.textContent = problem.expr;
+
+    cardsLayer.appendChild(el);
+    state.activeCards[id] = { problem, el, origX: x, origY: y, resolved: false, slotIndex };
+
+    attachDragHandlers(el, id);
+  }
+
+  function attachDragHandlers(el, id){
+    el.addEventListener('pointerdown', function(e){
+      const data = state.activeCards[id];
+      if(!data || data.resolved) return;
+      ensureAudio();
+      try{ el.setPointerCapture(e.pointerId); }catch(err){}
+      el.classList.add('dragging');
+      const rect = el.getBoundingClientRect();
+      const offsetX = e.clientX - rect.left;
+      const offsetY = e.clientY - rect.top;
+
+      function onMove(ev){
+        if(ev.pointerId !== e.pointerId) return;
+        el.style.left = (ev.clientX - offsetX) + 'px';
+        el.style.top = (ev.clientY - offsetY) + 'px';
+        updateZoneHighlight(el);
+      }
+      function onUp(ev){
+        if(ev.pointerId !== e.pointerId) return;
+        el.classList.remove('dragging');
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', onUp);
+        el.removeEventListener('pointercancel', onUp);
+        clearZoneHighlight();
+        resolveDrop(el, id);
+      }
+      el.addEventListener('pointermove', onMove);
+      el.addEventListener('pointerup', onUp);
+      el.addEventListener('pointercancel', onUp);
+    });
+  }
+
+  function pointInRect(x, y, r){
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  }
+
+  function updateZoneHighlight(el){
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    const lr = dropLeft.getBoundingClientRect();
+    const rr = dropRight.getBoundingClientRect();
+    dropLeft.classList.toggle('zone-active', pointInRect(cx, cy, lr));
+    dropRight.classList.toggle('zone-active', pointInRect(cx, cy, rr));
+  }
+  function clearZoneHighlight(){
+    dropLeft.classList.remove('zone-active');
+    dropRight.classList.remove('zone-active');
+  }
+
+  function resolveDrop(el, id){
+    const data = state.activeCards[id];
+    if(!data) return;
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    const lr = dropLeft.getBoundingClientRect();
+    const rr = dropRight.getBoundingClientRect();
+
+    if(pointInRect(cx, cy, lr)){
+      lockCardAndOpenPanel(el, id, 'left');
+    } else if(pointInRect(cx, cy, rr)){
+      lockCardAndOpenPanel(el, id, 'right');
+    } else {
+      el.style.transition = 'left .35s cubic-bezier(.34,1.56,.64,1), top .35s cubic-bezier(.34,1.56,.64,1)';
+      el.style.left = data.origX + 'px';
+      el.style.top = data.origY + 'px';
+      setTimeout(()=>{ el.style.transition = ''; }, 400);
+    }
+  }
+
+  function lockCardAndOpenPanel(el, id, side){
+    const data = state.activeCards[id];
+    delete state.activeCards[id];
+    if(typeof data.slotIndex === 'number') centerSlotsOccupied[data.slotIndex] = false;
+    el.remove();
+    openAnswerPanel(side, data.problem);
+  }
+
+  /* =========================================================
+     ANSWER PANEL
+  ========================================================= */
+  function openAnswerPanel(side, problem){
+    const p = panels[side];
+    p.problem.textContent = problem.expr + ' = ?';
+    p.opts.innerHTML = '';
+    p.opts.style.display = 'flex';
+    p.verbalWrap.classList.add('hidden');
+    p.result.textContent = '';
+    p.rule.textContent = problem.expr.includes('+')
+      ? 'Ереже: Қосылғыш, қосылғыш, қосындының мәні'
+      : 'Ереже: Азайғыш, азайтқыш, айырманың мәні';
+
+    const options = generateOptions(problem.answer);
+    options.forEach(function(val){
+      const btn = document.createElement('button');
+      btn.className = side === 'left'
+        ? 'ans-btn text-blue-700'
+        : 'ans-btn text-red-700';
+      btn.innerHTML = '<span class="text-lg md:text-xl font-bold opacity-70">Жауабы</span><span class="text-5xl md:text-6xl">' + val + '</span>';
+      btn.addEventListener('click', function(){
+        handleAnswer(side, val, problem.answer, btn, p.opts);
+      });
+      p.opts.appendChild(btn);
+    });
+
+    p.root.style.display = 'flex';
+  }
+
+  function handleAnswer(side, val, correct, btnEl, optsWrap){
+    if(val === correct){
+      playCorrect();
+      state.scores[side] += 1;
+      updateScoreboard(side);
+      spawnFriends(side, correct);
+
+      optsWrap.style.display = 'none';
+      const p = panels[side];
+      p.result.textContent = 'Дұрыс! +1 ұпай 🎉';
+      p.verbalWrap.classList.remove('hidden');
+    } else {
+      playWrong();
+      btnEl.classList.add('shake-anim');
+      setTimeout(()=> btnEl.classList.remove('shake-anim'), 500);
+    }
+  }
+
+  function closePanel(side){
+    const p = panels[side];
+    setTimeout(function(){
+      p.root.style.display = 'none';
+    }, 250);
+  }
+
+  Object.keys(panels).forEach(function(side){
+    panels[side].btnCorrect.addEventListener('click', function(){
+      state.scores[side] += 2;
+      updateScoreboard(side);
+      playStar();
+      showStarBurst(side);
+      closePanel(side);
+    });
+    panels[side].btnWrong.addEventListener('click', function(){
+      closePanel(side);
+    });
+  });
+
+  /* =========================================================
+     SCOREBOARD / YARD / STARS
+  ========================================================= */
+  function updateScoreboard(side){
+    const el = side === 'left' ? scoreLeftEl : scoreRightEl;
+    el.textContent = state.scores[side];
+    el.classList.remove('score-pop');
+    void el.offsetWidth;
+    el.classList.add('score-pop');
+  }
+
+  function spawnFriends(side, count){
+    const yard = side === 'left' ? yardLeft : yardRight;
+    for(let i=0;i<count;i++){
+      const span = document.createElement('span');
+      span.className = 'friend-emoji';
+      span.textContent = FRIEND_EMOJIS[Math.floor(Math.random()*FRIEND_EMOJIS.length)];
+      span.style.animationDelay = (i*0.08) + 's';
+      yard.appendChild(span);
+    }
+    while(yard.querySelectorAll('.friend-emoji').length > 26){
+      const first = yard.querySelector('.friend-emoji');
+      if(first) first.remove(); else break;
+    }
+  }
+
+  function showStarBurst(side){
+    const scoreEl = side === 'left' ? scoreLeftEl : scoreRightEl;
+    const rect = scoreEl.getBoundingClientRect();
+    for(let i=0;i<5;i++){
+      const star = document.createElement('div');
+      star.className = 'star-burst';
+      star.textContent = '⭐';
+      star.style.left = (rect.left + rect.width/2 - 20 + (Math.random()*60-30)) + 'px';
+      star.style.top = (rect.top) + 'px';
+      star.style.animationDelay = (i*0.06) + 's';
+      document.body.appendChild(star);
+      setTimeout(()=> star.remove(), 1400);
+    }
+  }
+
+  /* =========================================================
+     TIMER + SPAWN LOOP
+  ========================================================= */
+  function scheduleSpawn(){
+    if(!state.running) return;
+    spawnCard();
+    const delay = 3000 + Math.random()*1000;
+    state.spawnTimeout = setTimeout(scheduleSpawn, delay);
+  }
+
+  function startTimer(){
+    timerDisplay.textContent = state.timeLeft;
+    timerBadge.classList.remove('timer-urgent','pulse-red');
+    state.timerInterval = setInterval(function(){
+      state.timeLeft--;
+      timerDisplay.textContent = state.timeLeft;
+      if(state.timeLeft <= 10 && state.timeLeft > 0){
+        timerBadge.classList.add('timer-urgent','pulse-red');
+      }
+      if(state.timeLeft <= 0){
+        endGame();
+      }
+    }, 1000);
+  }
+
+  /* =========================================================
+     MODE SELECTOR
+  ========================================================= */
+  function setMode(m){
+    state.mode = m;
+    modeButtons.forEach(function(b){
+      b.classList.toggle('selected', b.dataset.mode === m);
+    });
+  }
+  modeButtons.forEach(function(b){
+    b.addEventListener('click', function(){ setMode(b.dataset.mode); });
+  });
+  setMode('mixed');
+
+  /* =========================================================
+     START / END / RESTART
+  ========================================================= */
+  function startGame(){
+    ensureAudio();
+    resetVisuals();
+
+    const nameLeft = inputNameLeft.value.trim();
+    const nameRight = inputNameRight.value.trim();
+    state.teamNames.left = nameLeft || 'Тапқырлар';
+    state.teamNames.right = nameRight || 'Алғырлар';
+    teamLabelLeft.textContent = state.teamNames.left;
+    teamLabelRight.textContent = state.teamNames.right;
+    $('final-label-left').textContent = state.teamNames.left;
+    $('final-label-right').textContent = state.teamNames.right;
+
+    state.scores = { left:0, right:0 };
+    state.timeLeft = 90;
+    state.cardIdCounter = 0;
+    state.activeCards = {};
+    updateScoreboard('left');
+    updateScoreboard('right');
+
+    startScreen.style.display = 'none';
+    endScreen.style.display = 'none';
+    app.classList.remove('hidden');
+
+    playBell();
+    state.running = true;
+
+    setTimeout(function(){
+      startTimer();
+      scheduleSpawn();
+    }, 900);
+  }
+
+  function resetVisuals(){
+    cardsLayer.innerHTML = '';
+    for(let i=0;i<centerSlotsOccupied.length;i++) centerSlotsOccupied[i] = false;
+    yardLeft.querySelectorAll('.friend-emoji').forEach(e=>e.remove());
+    yardRight.querySelectorAll('.friend-emoji').forEach(e=>e.remove());
+    confettiLayer.innerHTML = '';
+    panels.left.root.style.display = 'none';
+    panels.right.root.style.display = 'none';
+    clearZoneHighlight();
+    clearInterval(state.timerInterval);
+    clearTimeout(state.spawnTimeout);
+  }
+
+  function endGame(){
+    state.running = false;
+    clearInterval(state.timerInterval);
+    clearTimeout(state.spawnTimeout);
+    Object.values(state.activeCards).forEach(d => d.el.remove());
+    state.activeCards = {};
+    for(let i=0;i<centerSlotsOccupied.length;i++) centerSlotsOccupied[i] = false;
+    panels.left.root.style.display = 'none';
+    panels.right.root.style.display = 'none';
+
+    playFanfare();
+
+    const winnerText = $('winner-text');
+    $('final-left').textContent = state.scores.left;
+    $('final-right').textContent = state.scores.right;
+
+    let winnerSide = null;
+    if(state.scores.left > state.scores.right) winnerSide = 'left';
+    else if(state.scores.right > state.scores.left) winnerSide = 'right';
+
+    if(winnerSide === 'left'){
+      winnerText.textContent = '🦉 ' + state.teamNames.left + ' — Жеңімпаз! 🏆';
+      winnerText.className = 'text-4xl md:text-6xl font-black mb-8 text-blue-600';
+      launchConfetti('left');
+    } else if(winnerSide === 'right'){
+      winnerText.textContent = '🐯 ' + state.teamNames.right + ' — Жеңімпаз! 🏆';
+      winnerText.className = 'text-4xl md:text-6xl font-black mb-8 text-red-600';
+      launchConfetti('right');
+    } else {
+      winnerText.innerHTML = 'Тең түсті! Екі топ та жеңімпаз! 🤝';
+      winnerText.className = 'text-4xl md:text-6xl font-black mb-8 text-purple-600';
+      launchConfetti('left');
+      launchConfetti('right');
+    }
+
+    endScreen.style.display = 'flex';
+  }
+
+  function launchConfetti(side){
+    const colors = side === 'left'
+      ? ['#3B82F6','#93C5FD','#1D4ED8','#FFFFFF','#FDE047']
+      : ['#EF4444','#FCA5A5','#B91C1C','#FFFFFF','#FDE047'];
+    const w = window.innerWidth;
+    const rangeStart = side === 'left' ? 0 : w/2;
+    const rangeEnd = side === 'left' ? w/2 : w;
+
+    for(let i=0;i<55;i++){
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      const size = 8 + Math.random()*10;
+      piece.style.left = (rangeStart + Math.random()*(rangeEnd-rangeStart)) + 'px';
+      piece.style.width = size + 'px';
+      piece.style.height = size + 'px';
+      piece.style.background = colors[Math.floor(Math.random()*colors.length)];
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '3px';
+      piece.style.animationDuration = (2.4 + Math.random()*2) + 's';
+      piece.style.animationDelay = (Math.random()*1.3) + 's';
+      confettiLayer.appendChild(piece);
+    }
+  }
+
+  /* =========================================================
+     INIT
+  ========================================================= */
+  $('btn-start').addEventListener('click', startGame);
+  $('btn-restart').addEventListener('click', startGame);
+
+})();
+</script>
+</body>
+</html>
